@@ -14,13 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include "as.h"
+#include "lexer.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 int main(int argc, char **argv) {
   if (argc < 3) {
-    printf("Usage: %s input.cc output.as\n", argv[0]);
+    printf("Usage: %s input.hl output.as\n", argv[0]);
     return EXIT_FAILURE;
   }
 
@@ -36,7 +36,109 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  assembler_run(input, output);
+  lexer_init(input);
+
+  // TODO: debugging function.
+  while (lexer_next() != EOF) {
+    printf("%2d:%2d ", token.line, token.col);
+    switch (token.type) {
+    case TOK_OPEN_PARENS:
+      printf("(");
+      break;
+    case TOK_CLOSE_PARENS:
+      printf(")");
+      break;
+    case TOK_OPEN_BRACE:
+      printf("{");
+      break;
+    case TOK_CLOSE_BRACE:
+      printf("}");
+      break;
+    case TOK_COMMA:
+      printf(",");
+      break;
+    case TOK_SEMICOLON:
+      printf(";");
+      break;
+    case TOK_ASSIGN:
+      printf("=");
+      break;
+    case TOK_EQ:
+      printf("==");
+      break;
+    case TOK_NE:
+      printf("!=");
+      break;
+    case TOK_GT:
+      printf(">");
+      break;
+    case TOK_GE:
+      printf(">=");
+      break;
+    case TOK_LT:
+      printf("<");
+      break;
+    case TOK_LE:
+      printf("<=");
+      break;
+    case TOK_PLUS:
+      printf("+");
+      break;
+    case TOK_MINUS:
+      printf("-");
+      break;
+    case TOK_STAR:
+      printf("*");
+      break;
+    case TOK_SLASH:
+      printf("/");
+      break;
+    case TOK_INT_TYPE:
+      printf("int");
+      break;
+    case TOK_VAR:
+      printf("var");
+      break;
+    case TOK_FN:
+      printf("fn");
+      break;
+    case TOK_IF:
+      printf("if");
+      break;
+    case TOK_ELIF:
+      printf("elif");
+      break;
+    case TOK_ELSE:
+      printf("else");
+      break;
+    case TOK_FOR:
+      printf("for");
+      break;
+    case TOK_BREAK:
+      printf("break");
+      break;
+    case TOK_RETURN:
+      printf("return");
+      break;
+    case TOK_NOT:
+      printf("not");
+      break;
+    case TOK_AND:
+      printf("and");
+      break;
+    case TOK_OR:
+      printf("or");
+      break;
+    case TOK_INT:
+    case TOK_ID:
+      printf("%s", token.text);
+      break;
+    case TOK_ERROR:
+      break;
+    }
+    printf("\n");
+  }
+
   fclose(output);
   fclose(input);
   return EXIT_SUCCESS;

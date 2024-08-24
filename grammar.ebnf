@@ -27,9 +27,9 @@ statement
   ;
 
 expression
-  : 'not' expression
-  | relational 'and' expression
+  : relational 'and' expression
   | relational 'or' expression
+  | 'not' expression
   ;
 
 relational
