@@ -1,0 +1,66 @@
+program 
+  : function*
+  ;
+
+declaration : 'var' ID type '=' expression ;
+
+function : 'fn' ID '(' parameters? ')' type? '{' statement* '}' ;
+
+parameters : parameter (',' parameter)* ;
+parameter : ID type
+
+type
+//  : '*' type
+//  | '[' ']' type
+  | 'int'
+//  | 'str'
+  ;
+
+statement
+  : 'if' expression '{' statement* '}' ('elif' '{' statement* '}')* ('else' '{' statement* '}')?
+  | 'for' ( (declaration ';')? expression (';' expression)? )? '{' statement* '}' 
+//  | 'continue',
+  | 'break'
+  | 'return' expression?
+  | ID '=' expression
+  | declaration
+  ;
+
+expression
+  : 'not' expression
+  | relational 'and' expression
+  | relational 'or' expression
+  ;
+
+relational
+  : additive ('==' | '!=' | '>' | '>=' | '<' | '<=') additive
+  | additive
+  ;
+
+additive
+  : multiplicative ( '+' | '-') additive
+  | multiplicative
+  ;
+
+multiplicative
+  : postfix ('*' | '/') multiplicative
+  | postfix
+  ;
+
+postfix
+  : ID '(' expression* ')'
+//  | ID '[' expression ']'
+//  | ID '.' postfix
+  | primary
+  ;
+
+primary
+  : 
+  | '(' expression ')'
+//  | '[' expression (',' expression)* ']',
+  | '-' INT
+  | ID
+  | INT
+//  | BOOL
+//  | STR
+  ;
