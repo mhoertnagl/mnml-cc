@@ -8,13 +8,15 @@ typedef struct {
 } Type;
 
 typedef enum {
+  ND_VAR_DECL,
   ND_FN_DECL,
   ND_CALL,
   ND_IF,
   ND_FOR,
+  ND_CONTINUE,
+  ND_BREAK,
   ND_RET,
   ND_ASSIGN,
-  ND_VAR_DECL,
   ND_UNOP,
   ND_BINOP,
   ND_VAR,
@@ -50,6 +52,7 @@ typedef struct Node {
 
     // If statement.
     struct {
+      int uuid;
       struct Node *cond;
       struct Node *cons;
       struct Node *alt;
@@ -57,16 +60,26 @@ typedef struct Node {
 
     // For loop statement.
     struct {
+      int uuid;
       struct Node *decl;
       struct Node *cond;
-      struct Node *post;
+      struct Node *inc;
       struct Node *stmts;
     } for_stmt;
+
+    // Loop uuid for break and continue statements.
+    int uuid;
 
     // Return statement.
     struct {
       struct Node *expr;
     } ret;
+
+    // Assignment statement.
+    struct {
+      const char *name;
+      struct Node *expr;
+    } assign;
 
     // Unary operator.
     struct {
@@ -91,7 +104,6 @@ typedef struct Node {
     struct {
       const char *name;
       Type *type;
-      int offset;
     } var;
 
     u64 val_int;  

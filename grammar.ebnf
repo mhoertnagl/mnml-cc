@@ -1,69 +1,68 @@
-program 
-  : function*
-  ;
+//// program : ( var_decl | struct_decl | fn_decl )* ;
+program : fn_decl* ;
 
-declaration : 'var' ID type '=' expression ;
+param : ID type
+params : param (',' param)* ;
 
-function : 'fn' ID '(' parameters? ')' type? block ;
+var_decl : 'var' ID type '=' expr ;
 
-parameters : parameter (',' parameter)* ;
-parameter : ID type
+struct_decl : 'struct' ID '{' ?? '}' ;
+
+fn_decl : 'fn' ('(' param ')')? ID '(' params? ')' type? block ;
 
 type
-//  : '*' type
-//  | '[' ']' type
+  : '[' ']' type
   | 'i64'
-//  | 'str'
+  | ID
   ;
 
 block : '{' statement* '}' ;
 
-if : 'if' expression block ( 'else' (block | if) )? ;
+if : 'if' expr block ('else' (block | if))? ;
+for : 'for' ((var_decl ';')? expr (';' expr)?)? block ;
+ret : 'return' expr? ;
+assign : ID '=' expr ;
 
-statement
-  : if
-  | 'for' ( (declaration ';')? expression (';' expression)? )? block
-//  | 'continue',
-//  | 'break'
-  | 'return' expression?
-  | ID '=' expression
-  | declaration
+statement : var_decl | if | for | ret | 'continue' | 'break' | assign ;
+
+expr
+  : rel ('and' | 'or') expr
+  | 'not' expr
+  | rel
   ;
 
-expression
-  : relational 'and' expression
-  | relational 'or' expression
-  | 'not' expression
+rel
+  : add ('==' | '!=' | '>' | '>=' | '<' | '<=' ) add 
+  | add 
   ;
 
-relational
-  : additive ('==' | '!=' | '>' | '>=' | '<' | '<=') additive
-  | additive
+add 
+  : mul ( '+' | '-') add 
+  | mul 
   ;
 
-additive
-  : multiplicative ( '+' | '-') additive
-  | multiplicative
+mul 
+  : prim ('*' | '/') prim 
+  | prim 
   ;
 
-multiplicative
-  : postfix ('*' | '/') multiplicative
-  | postfix
+prim 
+  : '(' expr ')'
+  | access 
+  | atom 
   ;
 
-postfix
-  : ID '(' expression* ')'
-//  | ID '[' expression ']'
-//  | ID '.' postfix
-  | primary
-  ;
-
-primary
-  : 
-  | '(' expression ')'
-//  | '[' expression (',' expression)* ']',
-  | '-' INT
+access
+////  : ID '.' access
+  | ID '(' expr* ')'
+////  | ID '[' expr ']'
   | ID
+  ;
+
+atom
+////  | '[' expr (',' expr)* ']',
+////  | 'new' ID '{' (ID '=' expr)* '}'
+  : '-' INT
   | INT
 //  | BOOL
 //  | STR
