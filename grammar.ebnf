@@ -4,7 +4,7 @@ program
 
 declaration : 'var' ID type '=' expression ;
 
-function : 'fn' ID '(' parameters? ')' type? '{' statement* '}' ;
+function : 'fn' ID '(' parameters? ')' type? block ;
 
 parameters : parameter (',' parameter)* ;
 parameter : ID type
@@ -16,11 +16,15 @@ type
 //  | 'str'
   ;
 
+block : '{' statement* '}' ;
+
+if : 'if' expression block ( 'else' (block | if) )? ;
+
 statement
-  : 'if' expression '{' statement* '}' ('elif' '{' statement* '}')* ('else' '{' statement* '}')?
-  | 'for' ( (declaration ';')? expression (';' expression)? )? '{' statement* '}' 
+  : if
+  | 'for' ( (declaration ';')? expression (';' expression)? )? block
 //  | 'continue',
-  | 'break'
+//  | 'break'
   | 'return' expression?
   | ID '=' expression
   | declaration

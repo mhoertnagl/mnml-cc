@@ -5,6 +5,7 @@
 
 typedef struct {
   FILE *out;
+  int uuid;
 } Codegen;
 
 void codegen_run(Node *n, FILE* out);

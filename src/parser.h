@@ -10,6 +10,9 @@ typedef struct {
 typedef enum {
   ND_FN,
   ND_CALL,
+  ND_IF,
+  ND_FOR,
+  ND_RET,
   ND_UNOP,
   ND_BINOP,
   ND_INT,
@@ -35,10 +38,31 @@ typedef struct Node {
       Type *type;
     } param;
 
+    // Function call.
     struct {
       const char *name;
       struct Node *args;
     } call;
+
+    // If statement.
+    struct {
+      struct Node *cond;
+      struct Node *cons;
+      struct Node *alt;
+    } ifstmt;
+
+    // For loop statement.
+    struct {
+      struct Node *decl;
+      struct Node *cond;
+      struct Node *post;
+      struct Node *stmts;
+    } forstmt;
+
+    // Return statement.
+    struct {
+      struct Node *expr;
+    } ret;
 
     // Unary operator.
     struct {
