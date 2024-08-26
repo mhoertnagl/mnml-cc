@@ -8,7 +8,8 @@ static void gen(Node *n);
 
 #define lbl(name)     fprintf(cg.out, "%s\n", name)
 #define ins0(op)      fprintf(cg.out, "  %s\n", op)
-#define ins1(op, val) fprintf(cg.out, "  %s %lu\n", op, val) 
+#define ins1(op, val) fprintf(cg.out, "  %s %lu\n", op, val)
+#define jal(label)    fprintf(cg.out, "  jal %s\n", label)
 
 static void gen_seq(Node *n) {
   for (; n != NULL; n = n->next) { 
@@ -22,7 +23,8 @@ static void gen_fn(Node *n) {
 }
 
 static void gen_call(Node *n) {
-
+  gen_seq(n->call.args);
+  jal(n->call.name);
 }
 
 // static void gen_unop(Node *n) {
