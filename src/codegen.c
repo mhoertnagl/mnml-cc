@@ -26,43 +26,43 @@ static void gen_seq(Node *n) {
 }
 
 static void gen_fn(Node *n) {
-  lbl(n->fn.name);
-  gen_seq(n->fn.stmts);
+  lbl(n->fn_decl.name);
+  gen_seq(n->fn_decl.stmts);
   ins0("ret");
 }
 
 static void gen_if(Node *n) {
   int uuid = codegen_next_uuid();
-  gen(n->ifstmt.cond);
+  gen(n->if_stmt.cond);
   // TODO: actually bne - branch if not equal;
   // ins0("not");
   bra("else", uuid);
-  gen_seq(n->ifstmt.cons);
-  if (n->ifstmt.alt != NULL) {
+  gen_seq(n->if_stmt.cons);
+  if (n->if_stmt.alt != NULL) {
     jmp1("endif", uuid);
   }
   lbl1("else", uuid);
-  if (n->ifstmt.alt != NULL) {
-    gen_seq(n->ifstmt.alt);
+  if (n->if_stmt.alt != NULL) {
+    gen_seq(n->if_stmt.alt);
   }
   lbl1("endif", uuid);
 }
 
 static void gen_for(Node *n) {
   int uuid = codegen_next_uuid();
-  if (n->forstmt.decl != NULL) {
-    gen(n->forstmt.decl);
+  if (n->for_stmt.decl != NULL) {
+    gen(n->for_stmt.decl);
   }
   lbl1("for", uuid);
-  if (n->forstmt.cond) {
-    gen(n->forstmt.cond);
+  if (n->for_stmt.cond) {
+    gen(n->for_stmt.cond);
     // TODO: actually bne - branch if not equal;
     // ins0("not");
     bra("endfor", uuid);
   }
-  gen_seq(n->forstmt.stmts);
-  if (n->forstmt.post != NULL) {
-    gen(n->forstmt.post);
+  gen_seq(n->for_stmt.stmts);
+  if (n->for_stmt.post != NULL) {
+    gen(n->for_stmt.post);
   }
   jmp1("for", uuid);
   lbl1("endfor", uuid);
@@ -70,6 +70,11 @@ static void gen_for(Node *n) {
 
 static void gen_ret(Node *n) {
   ins0("ret");
+}
+
+static void gen_var_decl(Node *n) {
+  gen(n->var_decl.expr);
+  ins1("stv", 0);
 }
 
 static void gen_binop(Node *n) {
@@ -92,25 +97,31 @@ static void gen_binop(Node *n) {
   }
 }
 
-static void gen_call(Node *n) {
+static void gen_fn_call(Node *n) {
+  Node *a = n->fn_call.args;
+  for (u64 i = 1; a != NULL; i++, a = a->next) {
+    gen(a);
+    ins0("psv");
+  }
   // TODO: Push in reverse order?
-  gen_seq(n->call.args);
-  jal(n->call.name);
+  gen_seq(n->fn_call.args);
+  jal(n->fn_call.name);
 }
 
 static void gen_int(Node *n) {
-  ins1("psh", n->intval); 
+  ins1("psh", n->val_int); 
 }
 
 static void gen(Node *n) {
   switch (n->kind) {
-  case ND_FN:    gen_fn(n);    break;
-  case ND_IF:    gen_if(n);    break;
-  case ND_FOR:   gen_for(n);   break;
-  case ND_RET:   gen_ret(n);   break;
-  case ND_BINOP: gen_binop(n); break;
-  case ND_CALL:  gen_call(n);  break;
-  case ND_INT:   gen_int(n);   break;
+  case ND_FN_DECL:  gen_fn(n);       break;
+  case ND_IF:       gen_if(n);       break;
+  case ND_FOR:      gen_for(n);      break;
+  case ND_RET:      gen_ret(n);      break;
+  case ND_VAR_DECL: gen_var_decl(n); break;
+  case ND_BINOP:    gen_binop(n);    break;
+  case ND_CALL:     gen_fn_call(n);  break;
+  case ND_INT:      gen_int(n);      break;
   default:
     // TODO: error; 
     break;

@@ -8,13 +8,16 @@ typedef struct {
 } Type;
 
 typedef enum {
-  ND_FN,
+  ND_FN_DECL,
   ND_CALL,
   ND_IF,
   ND_FOR,
   ND_RET,
+  ND_ASSIGN,
+  ND_VAR_DECL,
   ND_UNOP,
   ND_BINOP,
+  ND_VAR,
   ND_INT,
 } NodeKind;
 
@@ -28,9 +31,9 @@ typedef struct Node {
     struct {
       const char *name;
       struct Node *params;
-      Type *type;
       struct Node *stmts;
-    } fn;
+      Type *type;
+    } fn_decl;
 
     // Function parameter.
     struct {
@@ -38,18 +41,19 @@ typedef struct Node {
       Type *type;
     } param;
 
-    // Function call.
+    // Variable declaration.
     struct {
       const char *name;
-      struct Node *args;
-    } call;
+      struct Node *expr;
+      Type *type;
+    } var_decl;
 
     // If statement.
     struct {
       struct Node *cond;
       struct Node *cons;
       struct Node *alt;
-    } ifstmt;
+    } if_stmt;
 
     // For loop statement.
     struct {
@@ -57,7 +61,7 @@ typedef struct Node {
       struct Node *cond;
       struct Node *post;
       struct Node *stmts;
-    } forstmt;
+    } for_stmt;
 
     // Return statement.
     struct {
@@ -77,7 +81,20 @@ typedef struct Node {
       struct Node *rhs;
     } binop;
 
-    u64 intval;
+    // Function call.
+    struct {
+      const char *name;
+      struct Node *args;
+    } fn_call;
+
+    // Variable.
+    struct {
+      const char *name;
+      Type *type;
+      int offset;
+    } var;
+
+    u64 val_int;  
   };
 } Node;
 
