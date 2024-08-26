@@ -1,20 +1,60 @@
 #include "lexer.h"
+#include <stdint.h>
+
+typedef uint64_t u64;
+
+typedef struct {
+
+} Type;
+
+typedef enum {
+  ND_FN,
+  ND_CALL,
+  ND_UNOP,
+  ND_BINOP,
+  ND_INT,
+} NodeKind;
 
 typedef struct Node {
-  int kind;
+  NodeKind kind;
   union {
-    // Function
+    // Sequences of nodes.
+    struct Node *next;
+
+    // Function.
     struct {
       const char *name;
-    };
+      struct Node *params;
+      Type *type;
+      struct Node *stmts;
+    } fn;
 
-    // Binary expression.
+    // Function parameter.
     struct {
-      Node *left;
+      const char *name;
+      Type *type;
+    } param;
+
+    struct {
+      const char *name;
+      struct Node *args;
+    } call;
+
+    // Unary operator.
+    struct {
       TokenType op;
-      Node *right;
-    };
+      struct Node *node;
+    } unop;
+
+    // Binary operator.
+    struct {
+      struct Node *lhs;
+      TokenType op;
+      struct Node *rhs;
+    } binop;
+
+    u64 intval;
   };
 } Node;
 
-Node *node_create();
+Node *parse();

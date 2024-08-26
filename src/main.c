@@ -133,6 +133,8 @@ int main(int argc, char **argv) {
     case TOK_ID:
       printf("%s", token.text);
       break;
+    case TOK_EOF:
+      break;
     case TOK_ERROR:
       break;
     }

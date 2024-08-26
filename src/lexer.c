@@ -19,8 +19,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#define IS(c) (lexer.chr != EOF && lexer.chr == c)
-#define IS_NOT(c) (lexer.chr != EOF && lexer.chr != c)
+#define IS(c)      (lexer.chr != EOF && lexer.chr == c)
+#define IS_NOT(c)  (lexer.chr != EOF && lexer.chr != c)
 #define IS_SPACE() (lexer.chr != EOF && isspace(lexer.chr))
 #define IS_DIGIT() (lexer.chr != EOF && isdigit(lexer.chr))
 #define IS_ALNUM() (lexer.chr != EOF && isalnum(lexer.chr))
@@ -47,7 +47,7 @@
 Token token;
 Lexer lexer;
 
-static void newline() {
+static void update_location() {
   if (IS('\n')) {
     lexer.line++;
     lexer.col = 1;
@@ -58,7 +58,7 @@ static void newline() {
 
 static void next() {
   lexer.chr = getc(lexer.input);
-  newline();
+  update_location();
 }
 
 void lexer_init(FILE *input) {
@@ -70,7 +70,7 @@ void lexer_init(FILE *input) {
 
 // clang-format off
 static Keyword keywords[] = {
-  { "int",    TOK_INT_TYPE }, { "var",    TOK_VAR      },
+  { "i64",    TOK_INT_TYPE }, { "var",    TOK_VAR      },
   { "fn",     TOK_FN       }, { "if",     TOK_IF       },
   { "elif",   TOK_ELIF     }, { "else",   TOK_ELSE     },
   { "for",    TOK_FOR      }, { "break",  TOK_BREAK    },
