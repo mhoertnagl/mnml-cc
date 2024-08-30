@@ -1,7 +1,7 @@
-#include "lexer.h"
-#include <stdint.h>
+#pragma once
 
-typedef uint64_t u64;
+#include "common.h"
+#include "lexer.h"
 
 typedef struct {
 
@@ -31,7 +31,7 @@ typedef struct Node {
 
     // Function.
     struct {
-      const char *name;
+      cstr name;
       struct Node *params;
       struct Node *stmts;
       Type *type;
@@ -39,13 +39,13 @@ typedef struct Node {
 
     // Function parameter.
     struct {
-      const char *name;
+      cstr name;
       Type *type;
     } param;
 
     // Variable declaration.
     struct {
-      const char *name;
+      cstr name;
       struct Node *expr;
       Type *type;
     } var_decl;
@@ -77,7 +77,7 @@ typedef struct Node {
 
     // Assignment statement.
     struct {
-      const char *name;
+      cstr name;
       struct Node *expr;
     } assign;
 
@@ -96,13 +96,14 @@ typedef struct Node {
 
     // Function call.
     struct {
-      const char *name;
+      cstr name;
       struct Node *args;
+      u64 argc;
     } fn_call;
 
     // Variable.
     struct {
-      const char *name;
+      cstr name;
       Type *type;
     } var;
 

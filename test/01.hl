@@ -1,6 +1,6 @@
 # A test function.
 # 2024 - Mathias Hörtnagl
-fn main(a int, b int) {
+fn main(a i64, b i64) {
   if a > 0 and a > b {
     for a > b {
       a = a - 1

@@ -6,47 +6,48 @@ Codegen cg;
 
 static void gen(Node *n);
 
-#define lbl(name)         fprintf(cg.out, "%s:\n", name)
-#define lbl1(name, uuid)  fprintf(cg.out, "%s%d:\n", name, uuid)
-#define ins0(op)          fprintf(cg.out, "  %s\n", op)
-#define ins1(op, val)     fprintf(cg.out, "  %s %lu\n", op, val)
-#define jmp(label)        fprintf(cg.out, "  jmp %s\n", label)
-#define jmp1(label, uuid) fprintf(cg.out, "  jmp %s_%d\n", label, uuid)
-#define bne(label, uuid)  fprintf(cg.out, "  bne %s_%d\n", label, uuid)
-#define call(label)       fprintf(cg.out, "  cal %s\n", label)
+#define ins(op)           fprintf(cg.out, "  %s\n", op)
+#define lbl(name)         fprintf(cg.out, "@%s:\n", name)
+#define lbl1(name, uuid)  fprintf(cg.out, "@%s.%d:\n", name, uuid)
+#define jmp(label)        fprintf(cg.out, "  jmp @%s\n", label)
+#define jmp1(label, uuid) fprintf(cg.out, "  jmp @%s.%d\n", label, uuid)
+#define jne(label, uuid)  fprintf(cg.out, "  jne @%s.%d\n", label, uuid)
+// #define call(label)       fprintf(cg.out, "  call @%s\n", label)
+#define call(label, argc) fprintf(cg.out, "  call @%s %lu\n", label, argc)
+#define ret()             fprintf(cg.out, "  ret\n")
+#define psh(val)          fprintf(cg.out, "  psh %lu\n", val)
+#define pshv()            fprintf(cg.out, "  pshv\n")
+#define ldv(offset)       fprintf(cg.out, "  ldv %li\n", offset)
+#define stv(offset)       fprintf(cg.out, "  stv %li\n", offset)
 
 static void gen_seq(Node *n) {
-  for (; n != NULL; n = n->next) { 
-    gen(n); 
-  }
+  for (; n != NULL; n = n->next) { gen(n); }
 }
 
 static void gen_var_decl(Node *n) {
-  // Get position from symbol table.
-  u64 offset = 0;
   gen(n->var_decl.expr);
-  ins1("var", offset);
+  pshv();
 }
 
 static void gen_fn_decl(Node *n) {
   lbl(n->fn_decl.name);
   gen_seq(n->fn_decl.stmts);
-  ins0("ret");
+  ret();
 }
 
 static void gen_if(Node *n) {
   int uuid = n->if_stmt.uuid;
   gen(n->if_stmt.cond);
-  bne("@_if_else", uuid);
+  jne(".if.else", uuid);
   gen_seq(n->if_stmt.cons);
   if (n->if_stmt.alt != NULL) {
-    jmp1("@_if_end", uuid);
+    jmp1(".if.end", uuid);
   }
-  lbl1("@_if_else", uuid);
+  lbl1(".if.else", uuid);
   if (n->if_stmt.alt != NULL) {
     gen_seq(n->if_stmt.alt);
   }
-  lbl1("@_if_end", uuid);
+  lbl1(".if.end", uuid);
 }
 
 static void gen_for(Node *n) {
@@ -54,77 +55,83 @@ static void gen_for(Node *n) {
   if (n->for_stmt.decl != NULL) {
     gen(n->for_stmt.decl);
   }
-  lbl1("@_for_loop", uuid);
+  lbl1(".for.loop", uuid);
   if (n->for_stmt.cond != NULL) {
     gen(n->for_stmt.cond);
-    bne("@_for_end", uuid);
+    jne(".for.end", uuid);
   }
   gen_seq(n->for_stmt.stmts);
-  lbl1("@_for_inc", uuid);
+  lbl1(".for.inc", uuid);
   if (n->for_stmt.inc != NULL) {
     gen(n->for_stmt.inc);
   }
-  jmp1("@_for_loop", uuid);
-  lbl1("@_for_end", uuid);
+  jmp1(".for.loop", uuid);
+  lbl1(".for.end", uuid);
 }
 
 static void gen_continue(Node *n) {
-  jmp1("@_for_inc", n->uuid);
+  jmp1(".for.inc", n->uuid);
 }
 
 static void gen_break(Node *n) {
-  jmp1("@_for_end", n->uuid);
+  jmp1(".for.end", n->uuid);
 }
 
 static void gen_assign(Node *n) {
   // Get position from symbol table.
-  u64 offset = 0;
+  i64 offset = 0;
   gen(n->var_decl.expr);
-  ins1("stv", offset);
+  stv(offset);
 }
 
 static void gen_ret(Node *n) {
-  ins0("ret");
+  if (n->ret.expr) {
+    gen(n->ret.expr);
+  }
+  ret();
 }
 
 static void gen_binop(Node *n) {
   gen(n->binop.lhs);
   gen(n->binop.rhs);
   switch (n->binop.op) {
-  case TOK_EQ:    ins0("equ"); break;
-  case TOK_NE:    ins0("neq"); break;
-  case TOK_GT:    ins0("sgt"); break;
-  case TOK_GE:    ins0("sge"); break;
-  case TOK_LT:    ins0("slt"); break;
-  case TOK_LE:    ins0("sle"); break;
-  case TOK_PLUS:  ins0("add"); break;
-  case TOK_MINUS: ins0("sub"); break;
-  case TOK_STAR:  ins0("mul"); break;
-  case TOK_SLASH: ins0("div"); break;
+  case TOK_EQ:    ins("eq"); break;
+  case TOK_NE:    ins("ne"); break;
+  case TOK_GT:    ins("gt"); break;
+  case TOK_GE:    ins("ge"); break;
+  case TOK_LT:    ins("lt"); break;
+  case TOK_LE:    ins("le"); break;
+  case TOK_PLUS:  ins("add"); break;
+  case TOK_MINUS: ins("sub"); break;
+  case TOK_STAR:  ins("mul"); break;
+  case TOK_SLASH: ins("div"); break;
   default:
     // TODO: error.
     break;
   }
 }
 
+// #define FORALL_ARGS(body) \
+//   for (Node *a = n->fn_call.args; a != NULL; a = a->next) body
+
+// static void gen_fn_call(Node *n) {
+//   FORALL_ARGS({ gen(a); })
+//   FORALL_ARGS({ pshv(); })
+//   call(n->fn_call.name);
+// }
+
 static void gen_fn_call(Node *n) {
-  for (Node *a = n->fn_call.args; a != NULL; a = a->next) {
-    gen(a);
-  }
-  for (Node *a = n->fn_call.args; a != NULL; a = a->next) {
-    ins0("var");
-  }
-  call(n->fn_call.name);
+  call(n->fn_call.name, n->fn_call.argc);
 }
 
 static void gen_var(Node *n) {
   // Get position from symbol table.
-  u64 offset = 0;
-  ins1("ldv", offset);
+  i64 offset = 0;
+  ldv(offset);
 }
 
 static void gen_int(Node *n) {
-  ins1("psh", n->val_int); 
+  psh(n->val_int); 
 }
 
 static void gen(Node *n) {

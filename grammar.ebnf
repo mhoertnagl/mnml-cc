@@ -1,56 +1,34 @@
-//// program : ( var_decl | struct_decl | fn_decl )* ;
+//// program : { var_decl | struct_decl | fn_decl } ;
 program : fn_decl* ;
-
-param : ID type
-params : param (',' param)* ;
 
 var_decl : 'var' ID type '=' expr ;
 
 struct_decl : 'struct' ID '{' ?? '}' ;
 
-fn_decl : 'fn' ('(' param ')')? ID '(' params? ')' type? block ;
+fn_decl : 'fn' ['(' param ')'] ID '(' params? ')' type? block ;
 
-type
-  : '[' ']' type
-  | 'i64'
-  | ID
-  ;
+params : param {',' param} ;
+param : ID type ;
 
-block : '{' statement* '}' ;
-
-if : 'if' expr block ('else' (block | if))? ;
-for : 'for' ((var_decl ';')? expr (';' expr)?)? block ;
+if : 'if' expr block ['else' (block | if)] ;
+for : 'for' [[var_decl ';'] expr [';' expr]] block ;
 ret : 'return' expr? ;
 assign : ID '=' expr ;
 
 statement : var_decl | if | for | ret | 'continue' | 'break' | assign ;
 
+block : '{' statement* '}' ;
+
 expr
-  : rel ('and' | 'or') expr
+  : rel [('and' | 'or') expr]
   | 'not' expr
-  | rel
   ;
 
-rel
-  : add ('==' | '!=' | '>' | '>=' | '<' | '<=' ) add 
-  | add 
-  ;
+rel : add [('==' | '!=' | '>' | '>=' | '<' | '<=' ) add] ;
+add : mul [( '+' | '-') add] ;
+mul : prim [('*' | '/') mul] ;
 
-add 
-  : mul ( '+' | '-') add 
-  | mul 
-  ;
-
-mul 
-  : prim ('*' | '/') prim 
-  | prim 
-  ;
-
-prim 
-  : '(' expr ')'
-  | access 
-  | atom 
-  ;
+prim : '(' expr ')' | access | atom ;
 
 access
 ////  : ID '.' access
@@ -66,4 +44,10 @@ atom
   | INT
 //  | BOOL
 //  | STR
+  ;
+
+type
+  : '[' ']' type
+  | 'i64'
+  | ID
   ;
