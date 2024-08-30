@@ -43,10 +43,9 @@ typedef enum {
   TOK_VAR,          // var
   TOK_FN,           // fn
   TOK_IF,           // if
-  TOK_ELIF,         // elif
   TOK_ELSE,         // else
   TOK_FOR,          // for
-                    //  TOK_CONTINUE,       // continue
+  TOK_CONTINUE,     // continue
   TOK_BREAK,        // break
   TOK_RETURN,       // return
   TOK_NOT,          // not

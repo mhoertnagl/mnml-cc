@@ -6,14 +6,13 @@ Codegen cg;
 
 static void gen(Node *n);
 
-#define ins(op)           fprintf(cg.out, "  %s\n", op)
 #define lbl(name)         fprintf(cg.out, "@%s:\n", name)
 #define lbl1(name, uuid)  fprintf(cg.out, "@%s.%d:\n", name, uuid)
-#define jmp(label)        fprintf(cg.out, "  jmp @%s\n", label)
-#define jmp1(label, uuid) fprintf(cg.out, "  jmp @%s.%d\n", label, uuid)
-#define jne(label, uuid)  fprintf(cg.out, "  jne @%s.%d\n", label, uuid)
-// #define call(label)       fprintf(cg.out, "  call @%s\n", label)
-#define call(label, argc) fprintf(cg.out, "  call @%s %lu\n", label, argc)
+#define ins(op)           fprintf(cg.out, "  %s\n", op)
+#define jmp(label)        fprintf(cg.out, "  jmp &%s\n", label)
+#define jmp1(label, uuid) fprintf(cg.out, "  jmp &%s.%d\n", label, uuid)
+#define jez(label, uuid)  fprintf(cg.out, "  jez &%s.%d\n", label, uuid)
+#define call(label, argc) fprintf(cg.out, "  call &%s %lu\n", label, argc)
 #define ret()             fprintf(cg.out, "  ret\n")
 #define psh(val)          fprintf(cg.out, "  psh %lu\n", val)
 #define pshv()            fprintf(cg.out, "  pshv\n")
@@ -36,95 +35,88 @@ static void gen_fn_decl(Node *n) {
 }
 
 static void gen_if(Node *n) {
-  int uuid = n->if_stmt.uuid;
-  gen(n->if_stmt.cond);
-  jne(".if.else", uuid);
-  gen_seq(n->if_stmt.cons);
-  if (n->if_stmt.alt != NULL) {
-    jmp1(".if.end", uuid);
-  }
-  lbl1(".if.else", uuid);
-  if (n->if_stmt.alt != NULL) {
-    gen_seq(n->if_stmt.alt);
-  }
-  lbl1(".if.end", uuid);
+  int id     = cg.if_id++;
+  Node *cond = n->if_stmt.cond;
+  Node *cons = n->if_stmt.cons;
+  Node *alts = n->if_stmt.alts;
+
+  gen(cond);
+  jez("if.else", id);
+  gen_seq(cons);
+  if (alts != NULL) { jmp1(".if.end", id); }
+  lbl1("if.else", id);
+  if (alts != NULL) { gen_seq(alts); }
+  lbl1("if.end", id);
 }
 
 static void gen_for(Node *n) {
-  int uuid = n->for_stmt.uuid;
-  if (n->for_stmt.decl != NULL) {
-    gen(n->for_stmt.decl);
+  int id      = cg.for_id++;
+  Node *decl  = n->for_stmt.decl;
+  Node *cond  = n->for_stmt.cond;
+  Node *stmts = n->for_stmt.stmts;
+  Node *incr  = n->for_stmt.incr;
+
+  if (decl != NULL) { gen(decl); }
+  lbl1("for.loop", id);
+  if (cond != NULL) {
+    gen(cond);
+    jez("for.end", id);
   }
-  lbl1(".for.loop", uuid);
-  if (n->for_stmt.cond != NULL) {
-    gen(n->for_stmt.cond);
-    jne(".for.end", uuid);
-  }
-  gen_seq(n->for_stmt.stmts);
-  lbl1(".for.inc", uuid);
-  if (n->for_stmt.inc != NULL) {
-    gen(n->for_stmt.inc);
-  }
-  jmp1(".for.loop", uuid);
-  lbl1(".for.end", uuid);
+  gen_seq(stmts);
+  lbl1("for.inc", id);
+  if (incr != NULL) { gen(incr); }
+  jmp1("for.loop", id);
+  lbl1("for.end", id);
 }
 
 static void gen_continue(Node *n) {
-  jmp1(".for.inc", n->uuid);
+  jmp1("for.inc", cg.for_id);
 }
 
 static void gen_break(Node *n) {
-  jmp1(".for.end", n->uuid);
+  jmp1("for.end", cg.for_id);
 }
 
-static void gen_assign(Node *n) {
+static void gen_assignment(Node *n) {
   // Get position from symbol table.
   i64 offset = 0;
-  gen(n->var_decl.expr);
+  gen(n->assign.expr);
   stv(offset);
 }
 
 static void gen_ret(Node *n) {
-  if (n->ret.expr) {
-    gen(n->ret.expr);
-  }
+  if (n->ret.expr != NULL) { gen(n->ret.expr); }
   ret();
 }
+
+#define BINOP_CASE(type, mnemonic) \
+  case type: ins(mnemonic); break;
 
 static void gen_binop(Node *n) {
   gen(n->binop.lhs);
   gen(n->binop.rhs);
   switch (n->binop.op) {
-  case TOK_EQ:    ins("eq"); break;
-  case TOK_NE:    ins("ne"); break;
-  case TOK_GT:    ins("gt"); break;
-  case TOK_GE:    ins("ge"); break;
-  case TOK_LT:    ins("lt"); break;
-  case TOK_LE:    ins("le"); break;
-  case TOK_PLUS:  ins("add"); break;
-  case TOK_MINUS: ins("sub"); break;
-  case TOK_STAR:  ins("mul"); break;
-  case TOK_SLASH: ins("div"); break;
+  BINOP_CASE( TOK_EQ,    "eq"  )
+  BINOP_CASE( TOK_NE,    "ne"  )
+  BINOP_CASE( TOK_GT,    "gt"  )
+  BINOP_CASE( TOK_GE,    "ge"  )
+  BINOP_CASE( TOK_LT,    "lt"  )
+  BINOP_CASE( TOK_LE,    "le"  )
+  BINOP_CASE( TOK_PLUS,  "add" )
+  BINOP_CASE( TOK_MINUS, "sub" )
+  BINOP_CASE( TOK_STAR,  "mul" )
+  BINOP_CASE( TOK_SLASH, "div" )
   default:
     // TODO: error.
     break;
   }
 }
 
-// #define FORALL_ARGS(body) \
-//   for (Node *a = n->fn_call.args; a != NULL; a = a->next) body
-
-// static void gen_fn_call(Node *n) {
-//   FORALL_ARGS({ gen(a); })
-//   FORALL_ARGS({ pshv(); })
-//   call(n->fn_call.name);
-// }
-
 static void gen_fn_call(Node *n) {
   call(n->fn_call.name, n->fn_call.argc);
 }
 
-static void gen_var(Node *n) {
+static void gen_var_lookup(Node *n) {
   // Get position from symbol table.
   i64 offset = 0;
   ldv(offset);
@@ -134,20 +126,23 @@ static void gen_int(Node *n) {
   psh(n->val_int); 
 }
 
-static void gen(Node *n) {
+#define ND_CASE(type, handler) \
+  case type: handler(n); break;
+
+static void gen(Node *n) { 
   switch (n->kind) {
-  case ND_VAR_DECL: gen_var_decl(n); break;
-  case ND_FN_DECL:  gen_fn_decl(n);  break;
-  case ND_IF:       gen_if(n);       break;
-  case ND_FOR:      gen_for(n);      break;
-  case ND_CONTINUE: gen_continue(n); break;
-  case ND_BREAK:    gen_break(n);    break;
-  case ND_RET:      gen_ret(n);      break;
-  case ND_ASSIGN:   gen_assign(n);   break;
-  case ND_BINOP:    gen_binop(n);    break;
-  case ND_CALL:     gen_fn_call(n);  break;
-  case ND_VAR:      gen_var(n);      break;
-  case ND_INT:      gen_int(n);      break;
+  ND_CASE( ND_VAR_DECL, gen_var_decl   )
+  ND_CASE( ND_FN_DECL,  gen_fn_decl    )
+  ND_CASE( ND_IF,       gen_if         )
+  ND_CASE( ND_FOR,      gen_for        )
+  ND_CASE( ND_CONTINUE, gen_continue   )
+  ND_CASE( ND_BREAK,    gen_break      )
+  ND_CASE( ND_RET,      gen_ret        )
+  ND_CASE( ND_ASSIGN,   gen_assignment )
+  ND_CASE( ND_BINOP,    gen_binop      )
+  ND_CASE( ND_CALL,     gen_fn_call    )
+  ND_CASE( ND_VAR,      gen_var_lookup )
+  ND_CASE( ND_INT,      gen_int        )
   default:
     // TODO: error; 
     break;
@@ -161,6 +156,7 @@ static void gen_program(Node *n) {
 
 void codegen_run(Node *n, FILE* out) {
   cg.out = out;
-  cg.uuid = 0;
+  cg.if_id = 0;
+  cg.for_id = 0;
   gen_program(n);
 }

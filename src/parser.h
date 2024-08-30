@@ -2,10 +2,7 @@
 
 #include "common.h"
 #include "lexer.h"
-
-typedef struct {
-
-} Type;
+#include "types.h"
 
 typedef enum {
   ND_VAR_DECL,
@@ -25,10 +22,9 @@ typedef enum {
 
 typedef struct Node {
   NodeKind kind;
+  // Sequences of nodes.
+  struct Node *next;
   union {
-    // Sequences of nodes.
-    struct Node *next;
-
     // Function.
     struct {
       cstr name;
@@ -52,23 +48,23 @@ typedef struct Node {
 
     // If statement.
     struct {
-      int uuid;
+      // int uuid;
       struct Node *cond;
       struct Node *cons;
-      struct Node *alt;
+      struct Node *alts;
     } if_stmt;
 
     // For loop statement.
     struct {
-      int uuid;
+      // int uuid;
       struct Node *decl;
       struct Node *cond;
-      struct Node *inc;
+      struct Node *incr;
       struct Node *stmts;
     } for_stmt;
 
-    // Loop uuid for break and continue statements.
-    int uuid;
+    //// Loop uuid for break and continue statements.
+    // int uuid;
 
     // Return statement.
     struct {

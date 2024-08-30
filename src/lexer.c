@@ -25,23 +25,23 @@
 #define IS_DIGIT() (lexer.chr != EOF && isdigit(lexer.chr))
 #define IS_ALNUM() (lexer.chr != EOF && isalnum(lexer.chr))
 
-#define TOK_CASE(c, typ)                                                       \
-  case c: {                                                                    \
-    token.type = typ;                                                          \
-    next();                                                                    \
-    return 0;                                                                  \
+#define TOK_CASE(c, typ) \
+  case c: {              \
+    token.type = typ;    \
+    next();              \
+    return 0;            \
   }
 
-#define TOK2_CASE(c1, c2, typ1, typ2)                                          \
-  case c1: {                                                                   \
-    next();                                                                    \
-    if (IS(c2)) {                                                              \
-      token.type = typ2;                                                       \
-      next();                                                                  \
-    } else {                                                                   \
-      token.type = typ1;                                                       \
-    }                                                                          \
-    return 0;                                                                  \
+#define TOK2_CASE(c1, c2, typ1, typ2) \
+  case c1: {                          \
+    next();                           \
+    if (IS(c2)) {                     \
+      token.type = typ2;              \
+      next();                         \
+    } else {                          \
+      token.type = typ1;              \
+    }                                 \
+    return 0;                         \
   }
 
 Token token;
@@ -68,16 +68,14 @@ void lexer_init(FILE *input) {
   next();
 }
 
-// clang-format off
 static Keyword keywords[] = {
-  { "i64",    TOK_INT_TYPE }, { "var",    TOK_VAR      },
-  { "fn",     TOK_FN       }, { "if",     TOK_IF       },
-  { "elif",   TOK_ELIF     }, { "else",   TOK_ELSE     },
-  { "for",    TOK_FOR      }, { "break",  TOK_BREAK    },
-  { "return", TOK_RETURN   }, { "not",    TOK_NOT      },
-  { "and",    TOK_AND      }, { "or",     TOK_OR       },
+  { "i64",    TOK_INT_TYPE   }, { "var",    TOK_VAR        },
+  { "fn",     TOK_FN         }, { "if",     TOK_IF         },
+  { "else",   TOK_ELSE       }, { "continue", TOK_CONTINUE },
+  { "for",    TOK_FOR        }, { "break",  TOK_BREAK      },
+  { "return", TOK_RETURN     }, { "not",    TOK_NOT        },
+  { "and",    TOK_AND        }, { "or",     TOK_OR         },
 };
-// clang-format on
 
 static TokenType get_keyword_token_type() {
   for (int i = 0; i < 12; i++) {
