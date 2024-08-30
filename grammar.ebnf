@@ -1,23 +1,23 @@
 //// program : { var_decl | struct_decl | fn_decl } ;
-program : fn_decl* ;
+program : {fn_decl} ;
 
 var_decl : 'var' ID type '=' expr ;
 
-struct_decl : 'struct' ID '{' ?? '}' ;
+struct_decl : 'struct' ID '{' {ID type} '}' ;
 
-fn_decl : 'fn' ['(' param ')'] ID '(' params? ')' type? block ;
+fn_decl : 'fn' ['(' param ')'] ID '(' [params] ')' [type] block ;
 
 params : param {',' param} ;
 param : ID type ;
 
 if : 'if' expr block ['else' (block | if)] ;
 for : 'for' [[var_decl ';'] expr [';' expr]] block ;
-ret : 'return' expr? ;
+ret : 'return' [expr] ;
 assign : ID '=' expr ;
 
 statement : var_decl | if | for | ret | 'continue' | 'break' | assign ;
 
-block : '{' statement* '}' ;
+block : '{' {statement} '}' ;
 
 expr
   : rel [('and' | 'or') expr]
@@ -31,16 +31,18 @@ mul : prim [('*' | '/') mul] ;
 prim : '(' expr ')' | access | atom ;
 
 access
-////  : ID '.' access
-  | ID '(' expr* ')'
-////  | ID '[' expr ']'
+  : ID '(' {expr} ')'
+  | ID '.' access
+  | ID '[' expr ']'
   | ID
   ;
 
+struct_assign : ID '=' expr ;
+
 atom
-////  | '[' expr (',' expr)* ']',
-////  | 'new' ID '{' (ID '=' expr)* '}'
-  : '-' INT
+  : '[' [expr {',' expr}] ']', // unklar
+  | 'new' ID '{' [struct_assign {',' struct_assign}] '}'
+  | '-' INT
   | INT
 //  | BOOL
 //  | STR
