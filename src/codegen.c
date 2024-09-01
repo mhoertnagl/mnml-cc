@@ -2,22 +2,23 @@
 #include "lexer.h"
 #include <stdio.h>
 
-Codegen cg;
-
-static void gen(Node *n);
-
 #define lbl(name)         fprintf(cg.out, "@%s:\n", name)
 #define lbl1(name, uuid)  fprintf(cg.out, "@%s.%d:\n", name, uuid)
 #define ins(op)           fprintf(cg.out, "  %s\n", op)
+#define psh(val)          fprintf(cg.out, "  psh %lu\n", val)
 #define jmp(label)        fprintf(cg.out, "  jmp &%s\n", label)
 #define jmp1(label, uuid) fprintf(cg.out, "  jmp &%s.%d\n", label, uuid)
 #define jez(label, uuid)  fprintf(cg.out, "  jez &%s.%d\n", label, uuid)
-#define call(label, argc) fprintf(cg.out, "  call &%s %lu\n", label, argc)
+// #define call(label, argc) fprintf(cg.out, "  call &%s %lu\n", label, argc)
+#define call(label)       fprintf(cg.out, "  call &%s\n", label)
 #define ret()             fprintf(cg.out, "  ret\n")
-#define psh(val)          fprintf(cg.out, "  psh %lu\n", val)
 #define pshv()            fprintf(cg.out, "  pshv\n")
 #define ldv(offset)       fprintf(cg.out, "  ldv %li\n", offset)
 #define stv(offset)       fprintf(cg.out, "  stv %li\n", offset)
+
+Codegen cg;
+
+static void gen(Node *n);
 
 static void gen_seq(Node *n) {
   for (; n != NULL; n = n->next) { gen(n); }
@@ -30,6 +31,7 @@ static void gen_var_decl(Node *n) {
 
 static void gen_fn_decl(Node *n) {
   lbl(n->fn_decl.name);
+  for (u64 i = 0; i < n->fn_decl.paramc; i++) { pshv(); }
   gen_seq(n->fn_decl.stmts);
   ret();
 }
@@ -113,7 +115,8 @@ static void gen_binop(Node *n) {
 }
 
 static void gen_fn_call(Node *n) {
-  call(n->fn_call.name, n->fn_call.argc);
+  // call(n->fn_call.name, n->fn_call.argc);
+  call(n->fn_call.name);
 }
 
 static void gen_var_lookup(Node *n) {

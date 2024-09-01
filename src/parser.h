@@ -29,6 +29,7 @@ typedef struct Node {
     struct {
       cstr name;
       struct Node *params;
+      u64 paramc;
       struct Node *stmts;
       Type *type;
     } fn_decl;
